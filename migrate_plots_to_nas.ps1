@@ -21,7 +21,6 @@ foreach ($file in $PlotFilesToMove)
     {
         Start-BitsTransfer -Source $file -Destination $DestPath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $count + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $DestPath + '"') -ErrorAction Stop
         Remove-Item $file -Confirm
-        echo "we would delete the file here"
     }
 
     catch
