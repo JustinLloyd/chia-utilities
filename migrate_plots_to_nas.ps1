@@ -1,20 +1,32 @@
-﻿$folders=@('F:\finalplots')
-foreach ($folder in $folders)
+﻿$Config=Import-PowershellDataFile -Path .\config.psd1
+$DestPath=$Config.FinalPlots.DestPath
+$SrcPaths=$Config.FinalPlots.SrcPaths
+
+$PlotFilesToMove = Get-ChildItem -Path $SrcPaths -Filter '*.plot' -ErrorAction Ignore
+# TODO only permit a single instance of this script to run
+echo $PlotFilesToMove
+$count=0
+echo "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
+foreach ($file in $PlotFilesToMove)
 {
-    $files=Get-ChildItem -Path $folder -Filter '*.plot'
-    foreach ($file in $files)
+    $count=$count+1
+    if (Test-Path -Path (Join-Path $DestPath $file.Name) -PathType Leaf)
     {
-        $destinationpath = '\\s-lloyd-02\chia-01'
-        echo $file
-        # rename the file to have a .plottmp extension, move the file using robocopy to the NAS, remove the .plottmp extension
-        $TempName = "$($file.Name).plottmp"
-        echo "TempName", $TempName
-        $TempSrcFilepath = Join-Path $file.DirectoryName $TempName
-        $TempDestFilepath = Join-Path $destinationpath $TempName
-        echo "TempSrcFilePath", $TempSrcFilepath
-        echo "TempDestFilePath", $TempDestFilepath
-        Rename-Item $file.FullName $TempSrcFilepath
-        robocopy /mov $file.DirectoryName $destinationpath $TempName
-        Rename-Item $TempDestFilepath (Join-Path $destinationpath $file.Name)
+        echo ('Skipping file (' + $count + ' of ' + $PlotFilesToMove.Count + ') - "' + $file.Name + '" already exists on "' + $DestPath + '"')
+        continue
+    }
+
+    echo ('Migrating plot (' + $count + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $DestPath + '"')
+    try
+    {
+        Start-BitsTransfer -Source $file -Destination $DestPath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $count + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $DestPath + '"') -ErrorAction Stop
+        Remove-Item $file -Confirm
+        echo "we would delete the file here"
+    }
+
+    catch
+    {
+        echo "Transfer process was interrupted or failed due to network error"
+        exit
     }
 }
