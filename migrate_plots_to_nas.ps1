@@ -1,6 +1,8 @@
-﻿$Config=Import-PowershellDataFile -Path .\config.psd1
-$IntermediatePath=$Config.IntermediatePath
-$HoldingPaths=$Config.HoldingPaths
+﻿#Requires -Version 7.0
+
+$Config=Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
+$IntermediatePath = $Config.IntermediatePath
+$HoldingPaths = $Config.HoldingPaths
 
 $PlotFilesToMove = Get-ChildItem -Path $HoldingPaths -Filter '*.plot' -ErrorAction Ignore
 # TODO only permit a single instance of this script to run
@@ -9,7 +11,7 @@ $FileIndex = 0
 echo "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
 foreach ($PlotFile in $PlotFilesToMove)
 {
-    $FileIndex=$FileIndex+1
+    $FileIndex = $FileIndex + 1
     if (Test-Path -Path (Join-Path $IntermediatePath $PlotFile.Name) -PathType Leaf)
     {
         echo ('Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') - "' + $PlotFile.Name + '" already exists on "' + $IntermediatePath + '"')
