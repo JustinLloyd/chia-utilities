@@ -1,3 +1,21 @@
-# chia-utilities
+# Chia XCH Plotting Utilities
 
 Some basic PowerShell scripts I use for assisting me when plotting out Chia (XCH) crypto.
+
+## Migrate Plots To NAS
+My plotting setup consists of a separate plotting machine with some fast SSDs attached. Once a plot is completed it is moved to a slower SSD ready for offload to the farm server.
+
+My plotter does not have direct access to the farm server storage. There is an intermediate storage server (My Synology NAS) that temporarily holds plots for the farm server. The "migrate_plots_to_nas" script will move plots from the plotter to the NAS.
+
+This script is stateless and can be interrupted at any time.
+
+I run this script on a scheduled task once every few hours.
+
+## Migrate Plots From NAS
+At a regular interval the farmer migrates plots from the NAS to local hard drives. The "migrate_plots_from_nas" script queries all attached spinning rust hard drives (ignores SSD) for available space, picks the HDD with the least amount of space that can fit the largest plot available and migrates the plot to that HDD.
+
+The script iterates over this process until all of the plots stored on the NAS have migrated to their final resting place.
+
+This script is stateless and can be interrupted at any time.
+
+This script runs as a scheduled task every few hours.
