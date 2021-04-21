@@ -1,25 +1,25 @@
 ﻿$Config=Import-PowershellDataFile -Path .\config.psd1
-$DestPath=$Config.FinalPlots.DestPath
-$SrcPaths=$Config.FinalPlots.SrcPaths
+$IntermediatePath=$Config.IntermediatePath
+$HoldingPaths=$Config.HoldingPaths
 
-$PlotFilesToMove = Get-ChildItem -Path $SrcPaths -Filter '*.plot' -ErrorAction Ignore
+$PlotFilesToMove = Get-ChildItem -Path $HoldingPaths -Filter '*.plot' -ErrorAction Ignore
 # TODO only permit a single instance of this script to run
 echo $PlotFilesToMove
-$count=0
+$FileIndex = 0
 echo "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
 foreach ($file in $PlotFilesToMove)
 {
-    $count=$count+1
-    if (Test-Path -Path (Join-Path $DestPath $file.Name) -PathType Leaf)
+    $FileIndex=$FileIndex+1
+    if (Test-Path -Path (Join-Path $IntermediatePath $file.Name) -PathType Leaf)
     {
-        echo ('Skipping file (' + $count + ' of ' + $PlotFilesToMove.Count + ') - "' + $file.Name + '" already exists on "' + $DestPath + '"')
+        echo ('Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') - "' + $file.Name + '" already exists on "' + $IntermediatePath + '"')
         continue
     }
 
-    echo ('Migrating plot (' + $count + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $DestPath + '"')
+    echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $IntermediatePath + '"')
     try
     {
-        Start-BitsTransfer -Source $file -Destination $DestPath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $count + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $DestPath + '"') -ErrorAction Stop
+        Start-BitsTransfer -Source $file -Destination $IntermediatePath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $IntermediatePath + '"') -ErrorAction Stop
         Remove-Item $file
     }
 

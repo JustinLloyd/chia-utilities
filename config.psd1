@@ -1,9 +1,14 @@
 @{
-  FinalPlots = @{
-      SrcPaths = @(
-        "f:\finalplots"
-        "e:\finalplots"
-      )
-      DestPath ="\\s-lloyd-02\chia-01"
-  }
+  # Holding Paths are fast temporary storage on the plotter where we keep the
+  # plots until they can be migrated off to the slower storage of the NAS
+    HoldingPaths = @(
+    "f:\finalplots"
+    "e:\finalplots"
+    )
+    # Intermediate Path is slower network storage where plots will be placed
+    # until they can be pull down by the harvesters
+    # In this particular case, the network storage is the Synology NAS with
+    # many terabytes of slow, spinning drives that all farming machines can
+    # access
+    IntermediatePath ="\\s-lloyd-02\chia-01"
 }
