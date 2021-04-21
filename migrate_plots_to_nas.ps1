@@ -7,20 +7,20 @@ $PlotFilesToMove = Get-ChildItem -Path $HoldingPaths -Filter '*.plot' -ErrorActi
 echo $PlotFilesToMove
 $FileIndex = 0
 echo "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
-foreach ($file in $PlotFilesToMove)
+foreach ($PlotFile in $PlotFilesToMove)
 {
     $FileIndex=$FileIndex+1
-    if (Test-Path -Path (Join-Path $IntermediatePath $file.Name) -PathType Leaf)
+    if (Test-Path -Path (Join-Path $IntermediatePath $PlotFile.Name) -PathType Leaf)
     {
-        echo ('Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') - "' + $file.Name + '" already exists on "' + $IntermediatePath + '"')
+        echo ('Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') - "' + $PlotFile.Name + '" already exists on "' + $IntermediatePath + '"')
         continue
     }
 
-    echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $IntermediatePath + '"')
+    echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"')
     try
     {
-        Start-BitsTransfer -Source $file -Destination $IntermediatePath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $file.Name + '" to "' + $IntermediatePath + '"') -ErrorAction Stop
-        Remove-Item $file
+        Start-BitsTransfer -Source $PlotFile -Destination $IntermediatePath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"') -ErrorAction Stop
+        Remove-Item $PlotFile
     }
 
     catch
