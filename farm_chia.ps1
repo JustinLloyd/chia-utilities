@@ -1,5 +1,8 @@
-﻿# Description: This file launches the farmer, harvester, node and wallet and then monitors the log file at the end
+﻿#Requires -Version 7.0
+
+# Description: This file launches the farmer, harvester, node and wallet and then monitors the log file at the end
 # Note: This is probably the least ideal way to start up chia for farming.
+$Config = Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
 Write-Host "Launching Chia farmer"
 cd ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon
 $WalletCount = Get-Process -Name 'start_wallet' -ErrorAction Ignore  | Measure-Object
