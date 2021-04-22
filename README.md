@@ -19,3 +19,22 @@ The script iterates over this process until all of the plots stored on the NAS h
 This script is stateless and can be interrupted at any time.
 
 This script runs as a scheduled task every few hours.
+
+## Farm Chia
+Launches the full node, wallet, harvester and farmer from the CLI if they are not already launched.
+
+This code is very prototype and probably the least optimal and incorrect way of doing this.
+
+This script would be run at regular interval from Task Scheduler to restart any stopped processes.
+
+## Plot Chia
+Creates a single chia plot with parameters pulled from the configuration file.
+
+Will only launch a new plot creation process if there are less than N plots already in process.
+
+This script would be run from Task Scheduler at regular intervals.
+
+## Plot Status
+Prints out statistical information about past plots and status of current plots.
+
+This script is a work in progress and at the prototype stage.
