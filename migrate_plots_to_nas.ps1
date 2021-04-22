@@ -1,5 +1,6 @@
 ﻿#Requires -Version 7.0
 
+# Description: This file copies plots from the plotter to the NAS
 $Config=Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
 $IntermediatePath = $Config.IntermediatePath
 $HoldingPaths = $Config.HoldingPaths
