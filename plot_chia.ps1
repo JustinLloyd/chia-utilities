@@ -12,7 +12,7 @@ $LoggingPath = $Config.LoggingPath
 $ExecutionLog = Join-Path $LoggingPath 'plotting.log'
 $TempStorageLocations = $Config.TempStorageLocations
 
-$PlottingCount = Get-Process -Name 'chia' -ErrorAction Ignore | Measure-Object
+$PlottingCount = Get-Process -Name 'chia' -ErrorAction Ignore | Where {$_.CommandLine -Like "* plots create *"}  | Measure-Object
 
 # if there are greater than X instances of chia running, then exit
 If ($PlottingCount.Count -ge $MaxParallelPlots)
@@ -24,21 +24,15 @@ If ($PlottingCount.Count -ge $MaxParallelPlots)
 Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - Found less than $($MaxParallelPlots) instances of chia, starting a new plot" -Path $ExecutionLog
 
 $ChiaProcesses = Get-Process -Name 'chia' | Select-Object -Property Id,CommandLine
-echo "Available Temporary Storage Locations"
-echo $TempStorageLocations
 foreach ($TempStorageLocation in $TempStorageLocations)
 {
     $TempStorageLocation.MaxParallelPlots -= ($ChiaProcesses | Where {$_.CommandLine -Like "* -t $($TempStorageLocation.Path) -d *"} | Measure -ErrorAction SilentlyContinue).Count
 }
 
-echo "Available Temporary Storage Locations After Scanning"
-echo $TempStorageLocations
 $TempStorageLocation = Get-Random -InputObject ($TempStorageLocations | Where {$_.MaxParallelPlots -Gt 0})
-echo "Temporary Storage Location Selected"
-echo $TempStorageLocation
 if (!$TempStorageLocation)
 {
-    echo "No available temporary storage location - exiting"
+    Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - No available temporary storage location - exiting" -Path $ExecutionLog
     exit
 }
 
