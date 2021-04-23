@@ -14,9 +14,18 @@
     MaxParallelPlots = 15
     ThreadsPerPlot = 16
     LoggingPath = "F:\logs"
-    PossibleTempPaths = @(
-        'c:\chia'
-        'd:\chia'
-        'f:\chia'
+    TempStorageLocations = @(
+        @{
+            Path = "c:\chia"
+            MaxParallelPlots = 5
+        }
+        @{
+            Path = "d:\chia"
+            MaxParallelPlots = 5
+        }
+        @{
+            Path = "f:\chia"
+            MaxParallelPlots = 3
+        }
     )
 }
