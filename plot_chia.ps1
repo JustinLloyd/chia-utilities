@@ -37,7 +37,6 @@ if (!$TempStorageLocation)
 }
 
 $HoldingPath = Get-Random -InputObject $HoldingPaths
-$HoldingPath = 'C:\finalplots'
 [void](New-Item -ItemType Directory -Path $TempStorageLocation.Path -Force)
 [void](New-Item -ItemType Directory -Path $HoldingPath -Force)
 $PlottingLogFilePath=Join-Path $LoggingPath "plot-$(get-date -f yyyy-MM-dd_HH-mm).log"
