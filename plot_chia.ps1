@@ -12,7 +12,8 @@ $LoggingPath = $Config.LoggingPath
 $ExecutionLog = Join-Path $LoggingPath 'plotting.log'
 $TempStorageLocations = $Config.TempStorageLocations
 
-$PlottingCount = Get-Process -Name 'chia' -ErrorAction Ignore | Where {$_.CommandLine -Like "* plots create *"}  | Measure-Object
+$ChiaProcesses = Get-Process -Name 'chia' -ErrorAction Ignore| Select-Object -Property Id,CommandLine
+$PlottingCount = $ChiaProcesses | Where {$_.CommandLine -Like "* plots create *"}  | Measure-Object
 
 # if there are greater than X instances of chia running, then exit
 If ($PlottingCount.Count -ge $MaxParallelPlots)
@@ -23,7 +24,6 @@ If ($PlottingCount.Count -ge $MaxParallelPlots)
 
 Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - Found less than $($MaxParallelPlots) instances of chia, starting a new plot" -Path $ExecutionLog
 
-$ChiaProcesses = Get-Process -Name 'chia' | Select-Object -Property Id,CommandLine
 foreach ($TempStorageLocation in $TempStorageLocations)
 {
     $TempStorageLocation.MaxParallelPlots -= ($ChiaProcesses | Where {$_.CommandLine -Like "* -t $($TempStorageLocation.Path) -d *"} | Measure -ErrorAction SilentlyContinue).Count
