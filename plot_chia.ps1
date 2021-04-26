@@ -1,13 +1,20 @@
 ﻿#Requires -Version 7.0
 
 # Description: Create a new instance of a chia plotter if there is capacity to do so
+$DefaultMaxParallelPlots = 1
+$DefaultRAMAllocation = 4608
+$DefaultBuckets = 128
+$DefaultPlottingThreads = 2
 $Config = Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
 
 # determine how many instances of chia are running
-$MaxParallelPlots = $Config.MaxParallelPlots
-$PlottingThreads = $Config.ThreadsPerPlot
+$MaxParallelPlots = if ($Config.MaxParallelPlots) { $Config.MaxParallelPlots } else { $DefaultMaxParallelPlots }
+$PlottingThreads = if ($Config.ThreadsPerPlot) { $Config.PlottingThreads } else { $DefaultPlottingThreads }
 $HoldingPaths = $Config.HoldingPaths
 $LoggingPath = $Config.LoggingPath
+$Buckets = if ($Config.Buckets) { $Config.Buckets } else { $DefaultBuckets }
+$RAMAllocation = if ($Config.RAMAllocation) { $Config.RAMAllocation } else { $DefaultRAMAllocation }
+
 [void](New-Item -ItemType Directory -Path $LoggingPath -Force)
 $ExecutionLog = Join-Path $LoggingPath 'plotting.log'
 $TempStorageLocations = $Config.TempStorageLocations
@@ -42,5 +49,5 @@ $HoldingPath = Get-Random -InputObject $HoldingPaths
 $PlottingLogFilePath=Join-Path $LoggingPath "plot-$(get-date -f yyyy-MM-dd_HH-mm).log"
 Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - Plotting chia to $($TempStorageLocation.Path) with logging output sent to $($PlottingLogFilePath)" -Path $ExecutionLog
 pushd ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon
-.\chia plots create -k 32 -n 1 -r $PlottingThreads -t $TempStorageLocation.Path -d $HoldingPath *>&1 | Tee-Object -FilePath $PlottingLogFilePath
+.\chia plots create -b $RAMAllocation -u $Buckets -k 32 -n 1 -r $PlottingThreads -t $TempStorageLocation.Path -d $HoldingPath *>&1 | Tee-Object -FilePath $PlottingLogFilePath
 popd
