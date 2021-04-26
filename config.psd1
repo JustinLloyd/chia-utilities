@@ -28,4 +28,16 @@
             MaxParallelPlots = 3
         }
     )
+    Farming = @{
+        Recurse = $true
+        AddToChia = $true
+        SkipRootPath = $true
+        Paths = @(
+            # the 24-bay server
+            "c:\chia\internal"
+            # the 45-bay jbod
+            "c:\chia\external01\front"
+            "c:\chia\external01\back"
+        )
+    }
 }
