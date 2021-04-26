@@ -28,6 +28,22 @@
             MaxParallelPlots = 3
         }
     )
+
+    # define locations where Chia will be farming from
+    # if you have many drives and use directory mount points instead of drive
+    # letters you can specify a common root directory and have the migration
+    # script recurse through the directories looking for mount points
+    # my configuration consists of 24 drives in an internal array mounted at
+    # c:\chia\internal and a further 45 drives in an external unit mounted at
+    # c:\chia\external01, with 24 drives on  the front of the external unit 
+    # and 21 drives on the back of the external unit. I mount each drive
+    # column/row order, e.g. D: is mounted at c:\chia\internal\col00-row00
+    # and E: is mounted at c:\chia\internal\col00-row01.
+    # Because c:\chia\internal is a directory that resides on a much smaller
+    # 1TB SSD I don't want to place plots in c:\chia\internal so the flag
+    # SkipRootPath will ignore c:\chia\internal as a possible storage location.
+    # The AddToChia flag will automatically add the directory to the chia farmer
+    # in case it isn't already configured.
     Farming = @{
         Recurse = $true
         AddToChia = $true
