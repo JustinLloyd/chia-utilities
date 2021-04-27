@@ -101,4 +101,8 @@ Add-Content -Path $StatusLogFilePath -Value "THREADS: $($ThreadsPerPlot)"
 Add-Content -Path $StatusLogFilePath -Value "RAM: $($RAMAllocation)"
 Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
 Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
-#Wait-Process $process.Id
+Wait-Process $process.Id
+# TODO retrieve amount of time it took to create the plot and add that to the main plot log file
+[void]Remove-Item $StatusLogFilePath
+[void]Remove-Item $StdOutFilePath
+[void]Remove-Item $StdErrFilePath
