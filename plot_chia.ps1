@@ -122,6 +122,6 @@ else
     Add-Content -Value "STAT: $($PlotId), FAIL, 0" -Path $ExecutionLog
 }
 
-[void]Remove-Item $StatusLogFilePath
-[void]Remove-Item $StdOutFilePath
-[void]Remove-Item $StdErrFilePath
+Remove-Item $StatusLogFilePath
+Remove-Item $StdOutFilePath
+Remove-Item $StdErrFilePath
