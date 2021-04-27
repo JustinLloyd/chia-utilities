@@ -31,13 +31,13 @@ if ($PlottingCount.Count -ge $MaxParallelPlots)
 {
     $msg = "More than $($MaxParallelPlots) instances of chia found, will not start another plot, gonna just exit now"
     Write-Host $msg
-    Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
     Exit
 }
 
 $msg ="Found less than $($MaxParallelPlots) instances of chia, starting a new plot"
 Write-Host $msg
-Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
 
 foreach ($TempStorageLocation in $TempStorageLocations)
 {
@@ -49,7 +49,7 @@ if (!$TempStorageLocation)
 {
     $msg = "No available temporary storage location - exiting"
     Write-Host $msg
-    Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
     exit
 }
 
@@ -65,7 +65,7 @@ $PlottingLogPath = Join-Path $LoggingPath "plot-$(get-date -f yyyy-MM-dd_HH-mm)"
 $StdOutFilePath = "$($PlottingLogPath).out.log"
 $StdErrFilePath = "$($PlottingLogPath).err.log"
 $StatusLogFilePath = "$($PlottingLogPath).status.log"
-Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - Plotting chia to $($TempStorageLocation.Path)" -Path $ExecutionLog
+Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - Plotting chia to $($TempStorageLocation.Path)" -Path $ExecutionLog
 #pushd ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon
 $ChiaExecutable = Resolve-Path ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon\chia.exe
 $ChiaArguments = "plots create -b $($RAMAllocation) -u $($Buckets) -k 32 -n 1 -r $($ThreadsPerPlot) -t $($TempStorageLocation.Path) -d $($HoldingPath)"
@@ -76,7 +76,7 @@ if ($process.HasExited)
 {
     $msg = "Chia prematurely exited"
     Write-Host $msg
-    Add-Content -Value "$(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
     Exit
 }
 
@@ -102,7 +102,26 @@ Add-Content -Path $StatusLogFilePath -Value "RAM: $($RAMAllocation)"
 Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
 Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
 Wait-Process $process.Id
-# TODO retrieve amount of time it took to create the plot and add that to the main plot log file
+$Completed = $StdOutFilePath | Select-String -Pattern '^Copied final file from ' -Quiet
+if ($Completed)
+{
+    try
+    {
+        # NOTE not exactly the most robust way of pulling the capturing group out. Let's think of how we can wrap this in some decent error checking.
+        $Elapsed = New-TimeSpan -Seconds ($StdOutFilePath | Select-String -Pattern "total time = (.*?) ").Matches[0].Groups[1].Captures[0].Value
+        Add-Content -Value "STAT: $($PlotId), GOOD, $($Elapsed)" -Path $ExecutionLog
+    }
+    catch
+    {
+        Add-Content -Value "STAT: $($PlotId), FAIL, 0" -Path $ExecutionLog
+    }
+
+}
+else
+{
+    Add-Content -Value "STAT: $($PlotId), FAIL, 0" -Path $ExecutionLog
+}
+
 [void]Remove-Item $StatusLogFilePath
 [void]Remove-Item $StdOutFilePath
 [void]Remove-Item $StdErrFilePath
