@@ -101,4 +101,4 @@ Add-Content -Path $StatusLogFilePath -Value "THREADS: $($ThreadsPerPlot)"
 Add-Content -Path $StatusLogFilePath -Value "RAM: $($RAMAllocation)"
 Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
 Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
-Wait-Process $process.Id
+#Wait-Process $process.Id
