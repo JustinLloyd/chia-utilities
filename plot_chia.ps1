@@ -97,4 +97,8 @@ $PlotId  = (Select-String -Path $StdOutFilePath -Pattern '^ID: (.*)$').Matches[0
 Add-Content -Path $StatusLogFilePath -Value "EXE: $($ChiaExecutable) $($ChiaArguments)"
 Add-Content -Path $StatusLogFilePath -Value "PID: $($process.Id)"
 Add-Content -Path $StatusLogFilePath -Value "ID: $($PlotId)"
+Add-Content -Path $StatusLogFilePath -Value "THREADS: $($ThreadsPerPlot)"
+Add-Content -Path $StatusLogFilePath -Value "RAM: $($RAMAllocation)"
+Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
+Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
 Wait-Process $process.Id
