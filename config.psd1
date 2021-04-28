@@ -14,6 +14,8 @@
     MaxParallelPlots = 15
     ThreadsPerPlot = 16
     LoggingPath = "F:\logs"
+    MaxPhase1Plots = 3
+    MaxPhase1PlotsPerTempPath = 1
     RemoveLogsOnCompletion = $false
     TempStorageLocations = @(
         @{

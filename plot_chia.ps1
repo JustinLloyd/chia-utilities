@@ -8,6 +8,7 @@ $DefaultMaxParallelPlots = 1
 $DefaultRAMAllocation = 4608
 $DefaultBuckets = 128
 $DefaultThreadsPerPlot = 2
+$DefaultMaxPhase1Plots = 1
 $Config = Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
 
 $HoldingPaths = $Config.HoldingPaths
@@ -16,10 +17,12 @@ $MaxParallelPlots = $DefaultMaxParallelPlots
 $ThreadsPerPlot = $DefaultThreadsPerPlot
 $Buckets = $DefaultBuckets
 $RAMAllocation = $DefaultRAMAllocation
+$MaxPhase1Plots = $DefaultMaxPhase1Plots
 if ($Config.MaxParallelPlots) { $MaxParallelPlots = $Config.MaxParallelPlots }
 if ($Config.ThreadsPerPlot) { $ThreadsPerPlot = $Config.ThreadsPerPlot } 
 if ($Config.Buckets) { $Buckets = $Config.Buckets }
-if ($Config.RAMAllocation) { $RAMAllocation = $Config.RAMAllocation } 
+if ($Config.RAMAllocation) { $RAMAllocation = $Config.RAMAllocation }
+if ($Config.MaxPhase1Plots) { $MaxPhase1Plots = $Config.MaxPhase1Plots}
 
 [void](New-Item -ItemType Directory -Path $LoggingPath -Force)
 $ExecutionLog = Join-Path $LoggingPath 'plotting.log'
@@ -126,18 +129,18 @@ if ($Completed)
     }
     catch
     {
-        Add-Content -Value "STAT: $($PlotId), FAIL1, 0" -Path $ExecutionLog
+        Add-Content -Value "STAT: $($PlotId), FAIL-MISSING-TOTAL-TIME, 0" -Path $ExecutionLog
     }
 
 }
 else
 {
-    Add-Content -Value "STAT: $($PlotId), FAIL2, 0" -Path $ExecutionLog
+    Add-Content -Value "STAT: $($PlotId), FAIL-MISSING-COPY-FINAL-FILE, 0" -Path $ExecutionLog
 }
 
 if ($Config.RemoveLogsOnCompletion)
 {
     Remove-Item $StatusLogFilePath -Force -ErrorAction Ignore
-    #Remove-Item $StdOutFilePath -Force -ErrorAction Ignore
+    Remove-Item $StdOutFilePath -Force -ErrorAction Ignore
     Remove-Item $StdErrFilePath -Force -ErrorAction Ignore
 }
