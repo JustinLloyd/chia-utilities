@@ -1,60 +1,117 @@
 #Requires -Version 7.0
 
-# Description: Create a new instance of a chia plotter if there is capacity to do so
-$Config = Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
-
-# determine how many instances of chia are running
-$MaxParallelPlots = $Config.MaxParallelPlots
-$LoggingPath = $Config.LoggingPath
-[void](New-Item -ItemType Directory -Path $LoggingPath -Force -ErrorAction Stop)
-
-$ExecutionLog = Join-Path $LoggingPath 'plotting.log'
-
-$ActivePlotProcesses = Get-Process -Name 'chia' -ErrorAction Ignore | Select-Object -Property CommandLine | Select-String -Pattern 'plots create'
-$AllPlotLogs = Get-ChildItem -Path $LoggingPath -Filter plot-*.log -ErrorAction Ignore
-$AllPlots = @()
-$PlotIndex = 0
-foreach ($PlotLogFile in $AllPlotLogs)
+# Description: Gets the status of all current plots
+function Get-PlotStatus
 {
-    $PlotIndex++
-    Write-Progress -Activity "Scanning Logs" -Status "$($PlotIndex) of $($AllPlotLogs.Length)" -PercentComplete ($PlotIndex / $AllPlotLogs.Length * 100) -CurrentOperation  $PlotLogFile.Name
-    $PlotInfo = [PSCustomObject]@{
-        Log = Get-Content -Path $PlotLogFile
-        Active = $false
-        Completed = $false
-        Id = ""
-        Phase = 0
-        PercentComplete = 0
-        Elapsed = New-TimeSpan
+    $Config = Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
+
+    # determine how many instances of chia are running
+    $MaxParallelPlots = $Config.MaxParallelPlots
+    $LoggingPath = $Config.LoggingPath
+    [void](New-Item -ItemType Directory -Path $LoggingPath -Force -ErrorAction Stop)
+
+    #$ActivePlotProcesses = Get-Process -Name 'chia' -ErrorAction Ignore | Select-Object -Property CommandLine | Select-String -Pattern 'plots create'
+    $AllStatusLogs = Get-ChildItem -Path $LoggingPath -Filter plot-*.status.log -ErrorAction Ignore
+    $AllPlotLogs = Get-ChildItem -Path $LoggingPath -Filter plot-*.out.log -ErrorAction Ignore
+    $AllPlots = @()
+    $PlotIndex = 0
+    foreach ($StatusLogFile in $AllStatusLogs)
+    {
+        $PlotIndex++
+        
+        Write-Progress -Activity "Scanning Logs" -Status "$($PlotIndex) of $($AllStatusLogs.Length)" -PercentComplete ($PlotIndex / $AllStatusLogs.Length * 100) -CurrentOperation  $StatusLogFile.Name
+        $PlotLogFile = $StatusLogFile -Replace "status.log", "out.log"
+        $PlotInfo = [PSCustomObject]@{
+            StatusLog = Get-Content -Path $StatusLogFile
+            PlotLog = Get-Content -Path $PlotLogFile
+            Active = $false
+    #        Completed = $false
+            Id = ""
+            Phase = 0
+            PercentComplete = 0
+            Elapsed = New-TimeSpan
+            PID = 0
+            CommandLine = ""
+            TempPath = ""
+            FinalPath = ""
+            Threads = 0
+            RAMAllocation = 0
+        }
+
+        $PlotInfo.Phase = ($PlotInfo.PlotLog  | Select-String -Pattern '^Starting phase (\d)/4:' | Select -Last 1).Matches[0].Groups[1].Captures[0].Value.ToString()
+        $PlotInfo.Id = ($PlotInfo.StatusLog | Select-String -Pattern '^ID: (.*)$').Matches[0].Groups[1].Captures[0].Value.ToString()
+        $PlotInfo.PID = ($PlotInfo.StatusLog | Select-String -Pattern '^PID: (.*)$').Matches[0].Groups[1].Captures[0].Value
+        try
+        {
+            $PlotInfo.CommandLine = ($PlotInfo.StatusLog | Select-String -Pattern '^EXE: (.*)$').Matches[0].Groups[1].Captures[0].Value
+        }
+
+        catch
+        {
+            # do nothing
+        }
+
+        try
+        {
+            $PlotInfo.TempPath = ($PlotInfo.StatusLog | Select-String -Pattern '^TEMP: (.*)$').Matches[0].Groups[1].Captures[0].Value
+        }
+        
+        catch
+        {
+            #do nothing
+        }
+
+        try
+        {
+            $PlotInfo.FinalPath = ($PlotInfo.StatusLog | Select-String -Pattern '^FINAL: (.*)$').Matches[0].Groups[1].Captures[0].Value
+        }
+        catch
+        {
+            # do nothing
+        }
+
+        try
+        {
+            $PlotInfo.RAMAllocation = ($PlotInfo.StatusLog | Select-String -Pattern '^RAM: (.*)$').Matches[0].Groups[1].Captures[0].Value
+        }
+
+        catch
+        {
+            # do nothing
+        }
+
+        try
+        {
+            $PlotInfo.Threads = ($PlotInfo.StatusLog | Select-String -Pattern '^THREADS: (.*)$').Matches[0].Groups[1].Captures[0].Value
+        }
+
+        catch
+        {
+            # do nothing
+        }
+
+        $PlotProcess = Get-Process -Id $PlotInfo.PID -ErrorAction Ignore
+        if ($PlotProcess)
+        {
+            $PlotInfo.Active = $true
+            $PlotInfo.Elapsed = $PlotProcess.CPU
+        }
+        else
+        {
+            try
+            {
+                $PlotInfo.Elapsed = New-TimeSpan -Seconds ($PlotInfo.Log | Select-String -Pattern "total time = (.*?) ").Matches[0].Groups[1].Captures[0].Value
+            }
+
+            catch
+            {
+                # do nothing
+            }
+        }
+
+        $AllPlots += $PlotInfo
     }
 
-    $PlotInfo.Id = ($PlotInfo.Log | Select-String -Pattern '^ID: (.*)$').Matches[0].Groups[1].Captures[0].Value.ToString()
-    $PlotInfo.Completed = $PlotInfo.Log | Select-String -Pattern '^Copied final file from ' -Quiet
-    try
-    {
-        $PlotInfo.Elapsed = New-TimeSpan -Seconds ($PlotInfo.Log | Select-String -Pattern "total time = (.*?) ").Matches[0].Groups[1].Captures[0].Value
-    }
-    catch
-    {
-        $PlotInfo.Elapsed = New-TimeSpan
-    }
-
-    $AllPlots += $PlotInfo
+    Write-Progress -Completed -Activity "Scanning Logs"
+    $AllPlots
 }
-
-Write-Progress -Completed -Activity "Scanning Logs"
-$AllPlots
-$AllPlots.Length
-#$AllPlotIds = Get-Content -Path $AllPlotLogs | Select-String -Pattern '^ID: '
-#$CompletedPlots = Get-Content -Path $PlotLogs | Select-String -Pattern '^Copied final file from ' | Measure-Object
-#$ActivePlotIds
-#$ActivePlotLogs
-#$ActivePlotPhases
-#$ActivePlotsByTempPath
-
-#$stats = Select-String -Path (Join-Path $LoggingPath "plot-*.log") -Pattern "total time" | ForEach-Object{($_ -Split "\s+")[3]} | Measure-Object -Average -Sum
-#echo "Active plots" $ActivePlots.Count
-#$TBPerDay = 86400 / $stats.Average * 6 * 101.366 / 1024
-#echo "Average plot time" $stats.Average/3600
-#echo "TiB/day" $TBPerDay
-#grep -i "total time" /home/jm/chialogs/*.log |awk '{sum=sum+$4} {avg=sum/NR} {tday=86400/avg*6*101.366/1024} END {printf "%d K32 plots, avg %0.1f seconds, %0.2f TiB/day \n", NR, avg, tday}'
