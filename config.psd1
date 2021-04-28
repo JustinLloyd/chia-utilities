@@ -14,6 +14,7 @@
     MaxParallelPlots = 15
     ThreadsPerPlot = 16
     LoggingPath = "F:\logs"
+    RemoveLogsOnCompletion = $false
     TempStorageLocations = @(
         @{
             Path = "c:\chia"

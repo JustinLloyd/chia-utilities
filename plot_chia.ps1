@@ -1,6 +1,9 @@
 ﻿#Requires -Version 7.0
 
 # Description: Create a new instance of a chia plotter if there is capacity to do so
+
+. .\plot_status.ps1
+
 $DefaultMaxParallelPlots = 1
 $DefaultRAMAllocation = 4608
 $DefaultBuckets = 128
@@ -48,6 +51,15 @@ $TempStorageLocation = Get-Random -InputObject ($TempStorageLocations | Where {$
 if (!$TempStorageLocation)
 {
     $msg = "No available temporary storage location - exiting"
+    Write-Host $msg
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+    exit
+}
+
+$PlotsInPhase1 = Get-PlotStatus| Where { $_.Active -And $_.Phase -Eq 1 } | Measure
+if ($PlotsInPhase1 -gt 0)
+{
+    $msg = "Detected plots in phase 1 - exiting until there aren't"
     Write-Host $msg
     Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
     exit
@@ -102,6 +114,7 @@ Add-Content -Path $StatusLogFilePath -Value "RAM: $($RAMAllocation)"
 Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
 Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
 Wait-Process $process.Id
+Sleep -Seconds 3
 $Completed = $StdOutFilePath | Select-String -Pattern '^Copied final file from ' -Quiet
 if ($Completed)
 {
@@ -113,15 +126,18 @@ if ($Completed)
     }
     catch
     {
-        Add-Content -Value "STAT: $($PlotId), FAIL, 0" -Path $ExecutionLog
+        Add-Content -Value "STAT: $($PlotId), FAIL1, 0" -Path $ExecutionLog
     }
 
 }
 else
 {
-    Add-Content -Value "STAT: $($PlotId), FAIL, 0" -Path $ExecutionLog
+    Add-Content -Value "STAT: $($PlotId), FAIL2, 0" -Path $ExecutionLog
 }
 
-Remove-Item $StatusLogFilePath
-Remove-Item $StdOutFilePath
-Remove-Item $StdErrFilePath
+if ($Config.RemoveLogsOnCompletion)
+{
+    Remove-Item $StatusLogFilePath -Force -ErrorAction Ignore
+    #Remove-Item $StdOutFilePath -Force -ErrorAction Ignore
+    Remove-Item $StdErrFilePath -Force -ErrorAction Ignore
+}
