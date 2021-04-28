@@ -115,7 +115,7 @@ Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
 Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
 Wait-Process $process.Id
 Sleep -Seconds 3
-$Completed = $StdOutFilePath | Select-String -Pattern '^Copied final file from ' -Quiet
+$Completed = Get-Content $StdOutFilePath | Select-String -Pattern '^Copied final file from ' -Quiet
 if ($Completed)
 {
     try
