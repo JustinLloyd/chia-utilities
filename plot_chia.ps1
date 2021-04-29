@@ -37,13 +37,24 @@ if ($PlottingCount.Count -ge $MaxParallelPlots)
 {
     $msg = "More than $($MaxParallelPlots) instances of chia found, will not start another plot, gonna just exit now"
     Write-Host $msg
-    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): $($msg)" -Path $ExecutionLog
     Exit
 }
 
 $msg ="Found less than $($MaxParallelPlots) instances of chia, starting a new plot"
 Write-Host $msg
-Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): $($msg)" -Path $ExecutionLog
+
+$StatusOfPlots = Get-PlotStatus
+$PlotsInPhase1 = $StatusOfPlots | Where { $_.Active -And $_.Phase -Eq 1 }
+$PlotsInPhase1Count = ($PlotsInPhase1 | Measure).Count
+if ($PlotsInPhase1Count -ge $MaxPhase1Plots)
+{
+    $msg = "Detected too many ($($PlotsInPhase1Count)) plots in phase 1 - exiting"
+    Write-Host $msg
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): $($msg)" -Path $ExecutionLog
+    exit
+}
 
 foreach ($TempStorageLocation in $TempStorageLocations)
 {
@@ -55,16 +66,7 @@ if (!$TempStorageLocation)
 {
     $msg = "No available temporary storage location - exiting"
     Write-Host $msg
-    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
-    exit
-}
-
-$PlotsInPhase1 = Get-PlotStatus| Where { $_.Active -And $_.Phase -Eq 1 } | Measure
-if ($PlotsInPhase1 -gt 0)
-{
-    $msg = "Detected plots in phase 1 - exiting until there aren't"
-    Write-Host $msg
-    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): $($msg)" -Path $ExecutionLog
     exit
 }
 
@@ -80,7 +82,7 @@ $PlottingLogPath = Join-Path $LoggingPath "plot-$(get-date -f yyyy-MM-dd_HH-mm)"
 $StdOutFilePath = "$($PlottingLogPath).out.log"
 $StdErrFilePath = "$($PlottingLogPath).err.log"
 $StatusLogFilePath = "$($PlottingLogPath).status.log"
-Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - Plotting chia to $($TempStorageLocation.Path)" -Path $ExecutionLog
+Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): Plotting chia to $($TempStorageLocation.Path)" -Path $ExecutionLog
 #pushd ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon
 $ChiaExecutable = Resolve-Path ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon\chia.exe
 $ChiaArguments = "plots create -b $($RAMAllocation) -u $($Buckets) -k 32 -n 1 -r $($ThreadsPerPlot) -t $($TempStorageLocation.Path) -d $($HoldingPath)"
@@ -91,7 +93,7 @@ if ($process.HasExited)
 {
     $msg = "Chia prematurely exited"
     Write-Host $msg
-    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm) - $($msg)" -Path $ExecutionLog
+    Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): $($msg)" -Path $ExecutionLog
     Exit
 }
 
@@ -118,24 +120,26 @@ Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
 Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
 Wait-Process $process.Id
 Sleep -Seconds 3
-$Completed = Get-Content $StdOutFilePath | Select-String -Pattern '^Copied final file from ' -Quiet
+Add-Content -Value "INFO: $($PlotId), GOOD, $($Elapsed)" -Path $ExecutionLog
+$PlotLog = Get-Content $StdOutFilePath
+$Completed = $PlotLog | Select-String -Pattern '^Copied final file from ' -Quiet
 if ($Completed)
 {
     try
     {
         # NOTE not exactly the most robust way of pulling the capturing group out. Let's think of how we can wrap this in some decent error checking.
-        $Elapsed = New-TimeSpan -Seconds ($StdOutFilePath | Select-String -Pattern "total time = (.*?) ").Matches[0].Groups[1].Captures[0].Value
-        Add-Content -Value "STAT: $($PlotId), GOOD, $($Elapsed)" -Path $ExecutionLog
+        $Elapsed = New-TimeSpan -Seconds ($PlotLog | Select-String -Pattern "total time = (.*?) ").Matches[0].Groups[1].Captures[0].Value
+        Add-Content -Value "STAT: $(get-date -f yyyy-MM-dd_HH-mm): $($PlotId), GOOD, $($Elapsed)" -Path $ExecutionLog
     }
     catch
     {
-        Add-Content -Value "STAT: $($PlotId), FAIL-MISSING-TOTAL-TIME, 0" -Path $ExecutionLog
+        Add-Content -Value "STAT: $(get-date -f yyyy-MM-dd_HH-mm): $($PlotId), FAIL-MISSING-TOTAL-TIME, 0" -Path $ExecutionLog
     }
 
 }
 else
 {
-    Add-Content -Value "STAT: $($PlotId), FAIL-MISSING-COPY-FINAL-FILE, 0" -Path $ExecutionLog
+    Add-Content -Value "STAT: $(get-date -f yyyy-MM-dd_HH-mm): $($PlotId), FAIL-MISSING-COPY-FINAL-FILE, 0" -Path $ExecutionLog
 }
 
 if ($Config.RemoveLogsOnCompletion)
