@@ -24,7 +24,7 @@ function Get-PlotStatus
         $PlotLogFile = $StatusLogFile -Replace "status.log", "out.log"
         $PlotInfo = [PSCustomObject]@{
             StatusLog = Get-Content -Path $StatusLogFile
-            PlotLog = Get-Content -Path $PlotLogFile
+            PlotLog = Get-Content -Path $PlotLogFile -ErrorAction Ignore
             Active = $false
     #        Completed = $false
             Id = ""
@@ -39,7 +39,16 @@ function Get-PlotStatus
             RAMAllocation = 0
         }
 
-        $PlotInfo.Phase = ($PlotInfo.PlotLog  | Select-String -Pattern '^Starting phase (\d)/4:' | Select -Last 1).Matches[0].Groups[1].Captures[0].Value.ToString()
+        try
+        {
+            $PlotInfo.Phase = ($PlotInfo.PlotLog  | Select-String -Pattern '^Starting phase (\d)/4:' | Select -Last 1).Matches[0].Groups[1].Captures[0].Value.ToString()
+        }
+
+        catch
+        {
+            # do nothing
+        }
+
         $PlotInfo.Id = ($PlotInfo.StatusLog | Select-String -Pattern '^ID: (.*)$').Matches[0].Groups[1].Captures[0].Value.ToString()
         $PlotInfo.PID = ($PlotInfo.StatusLog | Select-String -Pattern '^PID: (.*)$').Matches[0].Groups[1].Captures[0].Value
         try
