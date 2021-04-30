@@ -15,6 +15,7 @@ function Get-PlotStatus
     $AllPlotLogs = Get-ChildItem -Path $LoggingPath -Filter plot-*.out.log -ErrorAction Ignore
     $AllPlots = @()
     $PlotIndex = 0
+    $ChiaProcesses = Get-Process -Name 'chia' -ErrorAction Ignore
     foreach ($StatusLogFile in $AllStatusLogs)
     {
         $PlotIndex++
@@ -90,7 +91,7 @@ function Get-PlotStatus
             # do nothing
         }
 
-        $PlotProcess = Get-Process -Id $PlotInfo.PID -ErrorAction Ignore
+        $PlotProcess = $PlotProcesses | Where { $_.PID -Eq $PlotInfo.PID }
         if ($PlotProcess)
         {
             $PlotInfo.Active = $true
