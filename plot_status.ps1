@@ -100,7 +100,7 @@ function Get-PlotStatus
             # do nothing
         }
 
-        $PlotProcess = $PlotProcesses | Where { $_.PID -Eq $PlotInfo.PID }
+        $PlotProcess = $ChiaProcesses | Where { $_.Id -Eq $PlotInfo.PID }
         if ($PlotProcess)
         {
             $PlotInfo.Active = $true
