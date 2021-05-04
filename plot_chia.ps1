@@ -120,7 +120,7 @@ Add-Content -Path $StatusLogFilePath -Value "TEMP: $($TempStorageLocation.Path)"
 Add-Content -Path $StatusLogFilePath -Value "FINAL: $($HoldingPath)"
 Wait-Process $process.Id
 Sleep -Seconds 3
-Add-Content -Value "INFO: $($PlotId), GOOD, $($Elapsed)" -Path $ExecutionLog
+Add-Content -Value "INFO:  $(get-date -f yyyy-MM-dd_HH-mm): $($PlotId) : $($TempStorageLocation.Path) : $($HoldingPath)" -Path $ExecutionLog
 $PlotLog = Get-Content $StdOutFilePath
 $Completed = $PlotLog | Select-String -Pattern '^Copied final file from ' -Quiet
 if ($Completed)
