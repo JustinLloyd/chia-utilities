@@ -1,4 +1,5 @@
 ﻿#Requires -Version 7.0
+Set-StrictMode -Version 3.0
 
 # Description: This file copies plots from the plotter to the NAS
 $Config=Import-PowershellDataFile -Path .\config.psd1 -ErrorAction Stop
@@ -31,9 +32,9 @@ foreach ($PlotFile in $PlotFilesToMove)
             echo "Failed to correctly move file $($PlotFile.FullName). It doesn't exist on the destination path at $($IntermediatePath). Double-check everything and try again. Aborting so you don't lose any plots."
             exit
         }
-        if ($MovePlotFile.Length -ne $PlotFile.Length)
+        if ($MovedPlotFile.Length -ne $PlotFile.Length)
         {
-            echo "Failed to correctly move file $($PlotFile.Name). The size of the plot file at the destination path $(Join-Path $IntermediatePath $PlotFile.Name) differs from the size of file at $($PlotFile.Fullname). Double-check everything and try again. Aborting so you don't lose any plots."
+            echo "Failed to correctly move file $($PlotFile.FullName). The size of the plot file at the destination path $(Join-Path $IntermediatePath $PlotFile.Name) differs from the size of file at $($PlotFile.Fullname). Double-check everything and try again. Aborting so you don't lose any plots."
             Remove-Item (Join-Path $IntermediatePath $PlotFile.Name) -ErrorAction Ignore
             exit
         }
