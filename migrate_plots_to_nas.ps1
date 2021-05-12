@@ -7,25 +7,31 @@ $IntermediatePath = $Config.IntermediatePath
 $HoldingPaths = $Config.HoldingPaths
 
 $PlotFilesToMove = Get-ChildItem -Path $HoldingPaths -Filter '*.plot' -ErrorAction Ignore
+if ($PlotFilesToMove -eq $null)
+{
+    echo "Did not locate any plot files that need to migrate"
+    exit
+}
+
 # TODO only permit a single instance of this script to run
 echo $PlotFilesToMove
 $FileIndex = 0
 
-echo "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
+echo "Found $($PlotFilesToMove.Length) plot files that need to be migrated."
 foreach ($PlotFile in $PlotFilesToMove)
 {
     $FileIndex = $FileIndex + 1
     if (Test-Path -Path (Join-Path $IntermediatePath $PlotFile.Name) -PathType Leaf)
     {
-        $msg = 'Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') - "' + $PlotFile.Name + '" already exists on "' + $IntermediatePath + '"' 
+        $msg = 'Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') - "' + $PlotFile.Name + '" already exists on "' + $IntermediatePath + '"' 
         echo $msg
         continue
     }
 
-    echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"')
+    echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"')
     try
     {
-        Start-BitsTransfer -Source $PlotFile -Destination $IntermediatePath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"') -ErrorAction Stop
+        Start-BitsTransfer -Source $PlotFile -Destination $IntermediatePath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"') -ErrorAction Stop
         $MovedPlotFile = Get-ChildItem -Path (Join-Path $IntermediatePath $PlotFile.Name) -File -ErrorAction Ignore
         if ($MovedPlotFile -eq $null)
         {
