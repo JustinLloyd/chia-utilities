@@ -4,6 +4,11 @@ Some basic PowerShell scripts I use for assisting me when plotting out Chia (XCH
 
 Requirements: Windows 10, Powershell 7.0 or above. I'm running PowerShell 7.1 as of this writing.
 
+## Scheduled Tasks
+I run these scripts from the Task Scheduler and they are configured to run at various intervals. Each Scheduled Task launches a small .vbs script that then launches the actual PowerShell script that I want. This prevents any extraneous windows popping-up on my desktop.
+
+There is a script named `schedule_plotter_tasks.ps1` that you can use as a starting point for creating your own scheduled tasks. The script will create the scheduled tasks and then immediately disable them, just in case you haven't edited the path to the .vbs files, or have the desired stagger time.
+
 ## Plot Chia
 Creates a single chia plot with parameters pulled from the configuration file.
 
