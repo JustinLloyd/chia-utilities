@@ -30,10 +30,10 @@ $TempStorageLocations = $Config.TempStorageLocations
 
 # determine how many instances of chia are running
 $ChiaProcesses = Get-Process -Name 'chia' -ErrorAction Ignore| Select-Object -Property Id,CommandLine
-$PlottingCount = $ChiaProcesses | Where {$_.CommandLine -Like "* plots create *"}  | Measure-Object
+$PlottingCount = ($ChiaProcesses | Where {$_.CommandLine -Like "* plots create *"}).Length
 
 # if there are greater than X instances of chia running, then exit
-if ($PlottingCount.Count -ge $MaxParallelPlots)
+if ($PlottingCount -ge $MaxParallelPlots)
 {
     $msg = "More than $($MaxParallelPlots) instances of chia found, will not start another plot, gonna just exit now"
     Write-Host $msg
@@ -46,9 +46,8 @@ Write-Host $msg
 Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): $($msg)" -Path $ExecutionLog
 
 $StatusOfPlots = Get-PlotStatus
-$PlotsInPhase1 = $StatusOfPlots | Where { $_.Active -And $_.Phase -Eq 1 }
-$PlotsInPhase1Count = ($PlotsInPhase1 | Measure).Count
-if ($PlotsInPhase1Count -ge $MaxPhase1Plots)
+$PlotsInPhase1 = ($StatusOfPlots | Where { $_.Active -And $_.Phase -Eq 1 })
+if ($PlotsInPhase1.Length -ge $MaxPhase1Plots)
 {
     $msg = "Detected too many ($($PlotsInPhase1Count)) plots in phase 1 - exiting"
     Write-Host $msg
