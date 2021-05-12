@@ -26,7 +26,7 @@ $FarmingPaths = Get-Childitem -Path $Config.Farming.Paths @Params -Directory | S
 # get a list of all plots files on the NAS sorted by size in descending order, so the biggest files are listed first
 $PlotFilesToMove = Get-ChildItem -Path $IntermediatePath -Filter '*.plot' -ErrorAction Ignore | Sort -Descending -Property Length
 
-echo "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
+echo "Found $($PlotFilesToMove.Length) plot files that need to be migrated."
 $FileIndex = 0
 foreach ($PlotFile in $PlotFilesToMove)
 {
@@ -40,12 +40,12 @@ foreach ($PlotFile in $PlotFilesToMove)
         Continue
     }
 
-    echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $Destination.FullName + '"')
+    echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') "' + $PlotFile.Name + '" to "' + $Destination.FullName + '"')
     try
     {
         Start-BitsTransfer -Source $PlotFile -Destination $Destination.FullName `
             -DisplayName 'Migrate plots from NAS' `
-            -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $Destination.FullName + '"') `
+            -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') "' + $PlotFile.Name + '" to "' + $Destination.FullName + '"') `
             -ErrorAction Stop
         Remove-Item $PlotFile
     }
