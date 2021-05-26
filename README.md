@@ -34,6 +34,8 @@ This script is a work in progress and at the prototype stage.
 
 This script only works if the plots were launched via `plot_chia.ps1` script.
 
+## Trim SSDs
+The script `trim_ssds.ps1` will force a TRIM to be performed on all SSDs attached to your system. I've noticed that a once a day trim will boost plotting performance significantly. The problem with the Windows 10 scheduled trim is that either it doesn't run at all, doesn't run often enough, or runs at such low priority that your drive never gets the chance to execute the low-priority trim operation due to the continuous plotting operations that are underway. This script fixes that by forcing the trim. Don't trim too oftn, a trim does in fact shorten the lifespan of your SSD, by a very small amount, and one trim per day for a year will shorten the lifespan by around 0.1%, but it does add up and isn't a recommended practice to perform it all the time. Under normal circumstances on a large (1TB or higher) SSD that is only 80% full and isn't being continuously written too over-and-over again, the exact opposite of a plotting operation, a once a month trim is sufficient.
 
 ## Migrate Plots To NAS
 My plotting setup consists of a separate plotting machine with some fast SSDs attached. Once a plot is completed it is moved to a slower SSD ready for offload to the farm server.
