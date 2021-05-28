@@ -48,6 +48,8 @@ This script is stateless and can be interrupted at any time.
 
 I run this script on a scheduled task once every few hours.
 
+Only a single instance of this script can execute at any time so an overlapping Task Schedule won't cause any issues.
+
 ## Migrate Plots From NAS
 At a regular interval the farmer migrates plots from the NAS to local hard drives. The `migrate_plots_from_nas.ps1` script queries all attached spinning rust hard drives (ignores SSD) for available space, picks the HDD with the least amount of space that can fit the largest plot available and migrates the plot to that HDD.
 
