@@ -20,7 +20,7 @@ function Get-PlotStatus
     {
         $PlotIndex++
         
-        Write-Progress -Activity "Scanning Logs" -Status "$($PlotIndex) of $($AllStatusLogs.Length)" -PercentComplete ($PlotIndex / $AllStatusLogs.Length * 100) -CurrentOperation  $StatusLogFile.Name
+        Write-Progress -Activity "Scanning Logs" -Status "$($PlotIndex) of $($AllStatusLogs.Count)" -PercentComplete ($PlotIndex / $AllStatusLogs.Count * 100) -CurrentOperation  $StatusLogFile.Name
         $PlotLogFile = $StatusLogFile -Replace "status.log", "out.log"
         $PlotInfo = [PSCustomObject]@{
             StatusLog = Get-Content -Path $StatusLogFile
