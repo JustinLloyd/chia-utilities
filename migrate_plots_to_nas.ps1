@@ -41,7 +41,7 @@ try
     $FileIndex = 0
 
     $StartTime = Get-Date
-    $msg = "Found $($PlotFilesToMove.Length) plot files that need to be migrated."
+    $msg = "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
     echo $msg
     Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
     foreach ($PlotFile in $PlotFilesToMove)
@@ -49,18 +49,18 @@ try
         $FileIndex = $FileIndex + 1
         if (Test-Path -Path (Join-Path $IntermediatePath $PlotFile.Name) -PathType Leaf)
         {
-            $msg = 'Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') - "' + $PlotFile.Name + '" already exists on "' + $IntermediatePath + '"' 
+            $msg = 'Skipping file (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') - "' + $PlotFile.Name + '" already exists on "' + $IntermediatePath + '"' 
             echo $msg
             Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
             continue
         }
 
-        $msg = 'Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"'
+        $msg = 'Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"'
         echo $msg
         Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
         try
         {
-            Start-BitsTransfer -Source $PlotFile -Destination $IntermediatePath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Length + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"') -ErrorAction Stop
+            Start-BitsTransfer -Source $PlotFile -Destination $IntermediatePath -DisplayName 'Migrate plots to NAS' -Description ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $IntermediatePath + '"') -ErrorAction Stop
             $MovedPlotFile = Get-ChildItem -Path (Join-Path $IntermediatePath $PlotFile.Name) -File -ErrorAction Ignore
             if ($MovedPlotFile -eq $null)
             {
