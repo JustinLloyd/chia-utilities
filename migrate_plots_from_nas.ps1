@@ -28,25 +28,40 @@ if ($Config.Farming.Recurse)
 try
 {
     # acquire a mutex lock to ensure only a single instance of the script is running
+    $Mutex = New-Object System.Threading.Mutex($false, 'migrate_plots_from_nas')
     $MutexAcquired = $false
-    $Mutex = New-Object System.Threading.Mutex($true, 'migrate_plots_from_nas', [ref] $MutexAcquired)
-    # if we cannot acquire a mutex lock then we just exit gracefully
-    if (!$MutexAcquired)
+    try
     {
-        $msg = "Already migrating plots"
-        echo $msg
-        Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
-        $Mutex.Dispose()
-        $Mutex = $null
-        exit
+        $MutexAcquired = $Mutex.WaitOne(0)
     }
+    catch [System.Threading.AbandonedMutexException]
+    {
+        $msg = "A previous execution of the migration script did not cleanly exit."
+        echo $msg
+        Add-Content -Path $LoggingFilePath "DBG: $(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
+        $MutexAcquired = $true
+    }
+
+    # if we cannot acquire a mutex lock then we just exit gracefully
+   if (!$MutexAcquired)
+   {
+       $msg = "Already migrating plots"
+       echo $msg
+       Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
+       $Mutex.Dispose()
+       $Mutex = $null
+       exit
+   }
 
     $FarmingPaths = Get-Childitem -Path $Config.Farming.Paths @Params -Directory | Select Fullname
 
     # get a list of all plots files on the NAS sorted by size in descending order, so the biggest files are listed first
     $PlotFilesToMove = Get-ChildItem -Path $IntermediatePath -Filter '*.plot' -ErrorAction Ignore | Sort -Descending -Property Length
 
-    echo "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
+    $msg = "Found $($PlotFilesToMove.Count) plot files that need to be migrated."
+    echo $msg
+    Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
+
     $FileIndex = 0
     foreach ($PlotFile in $PlotFilesToMove)
     {
@@ -56,11 +71,15 @@ try
         $Destination = $FarmingPaths | Select Fullname, @{Name="SizeRemaining"; Expression={(Get-Volume -filepath $_.Fullname).SizeRemaining}} | Sort -Property SizeRemaining | Where -Property SizeRemaining -ge -Value $PlotFile.Length | Select -First 1
         if (!$Destination)
         {
-            echo "None of the defined storage locations have enough free space to store plot $($PlotFile)"
+            $msg = "None of the defined storage locations have enough free space to store plot $($PlotFile)"
+            echo $msg
+            Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
             Continue
         }
 
-        echo ('Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $Destination.FullName + '"')
+        $msg = 'Migrating plot (' + $FileIndex + ' of ' + $PlotFilesToMove.Count + ') "' + $PlotFile.Name + '" to "' + $Destination.FullName + '"'
+        echo $msg
+        Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
         try
         {
             Start-BitsTransfer -Source $PlotFile -Destination $Destination.FullName `
@@ -72,7 +91,9 @@ try
 
         catch
         {
-            echo "Transfer process was interrupted or failed due to network error or lack of storage space."
+            $msg = "Transfer process was interrupted or failed due to network error or lack of storage space."
+            echo $msg
+            Add-Content -Path $LoggingFilePath "$(Get-Date -f yyyy-MM-dd_HH-mm): $($msg)"
             exit
         }
 
@@ -90,4 +111,3 @@ finally
         $Mutex = $null
     }
 }
-
