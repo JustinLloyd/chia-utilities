@@ -2,7 +2,7 @@
   # Holding Paths are fast temporary storage on the plotter where we keep the
   # plots until they can be migrated off to the slower storage of the NAS
     HoldingPaths = @(
-    "c:\finalplots"
+    "d:\finalplots"
 #    "f:\finalplots"
     )
     # Intermediate Path is slower network storage where plots will be placed
@@ -11,27 +11,64 @@
     # many terabytes of slow, spinning drives that all farming machines can
     # access
     IntermediatePath ="\\s-lloyd-02\chia-01"
-    MaxParallelPlots = 15
-    ThreadsPerPlot = 16
-    LoggingPath = "F:\logs"
-    MaxPhase1Plots = 3
-    MaxPhase1PlotsPerTempPath = 1
-    RemoveLogsOnCompletion = $false
+    MaxParallelPlots = 32
+    ThreadsPerPlot = 2
+    LoggingPath = "d:\logs"
+    MaxPhase1Plots = 12
+    RAMAllocation = 6750
+    MaxPhase1PlotsPerTempPath = 2
+    RemoveLogsOnCompletion = $true
     TempStorageLocations = @(
         @{
             Path = "c:\chia"
-            MaxParallelPlots = 5
+            MaxParallelPlots = 2
+        }
+        # @{
+        #     Path = "d:\chia"
+        #     MaxParallelPlots = 2
+        # }
+        @{
+            Path = "e:\chia"
+            MaxParallelPlots = 3
+        }
+        # @{
+        #     Path = "f:\chia"
+        #     MaxParallelPlots = 3
+        # }
+        @{
+            Path = "g:\chia"
+            MaxParallelPlots = 3
         }
         @{
-            Path = "d:\chia"
-            MaxParallelPlots = 5
+            Path = "i:\chia"
+            MaxParallelPlots = 3
         }
         @{
-            Path = "f:\chia"
+            Path = "j:\chia"
+            MaxParallelPlots = 3
+        }
+        @{
+            Path = "k:\chia"
+            MaxParallelPlots = 3
+        }
+        @{
+            Path = "l:\chia"
+            MaxParallelPlots = 3
+        }
+        @{
+            Path = "n:\chia"
             MaxParallelPlots = 3
         }
     )
 
+    SecondaryTempStorageLocations = @(
+        @{
+            Path = "d:\chia"
+        }
+        # @{
+        #     Path = "c:\chia"
+        # }
+    )
     # define locations where Chia will be farming from
     # if you have many drives and use directory mount points instead of drive
     # letters you can specify a common root directory and have the migration
@@ -60,3 +97,4 @@
         )
     }
 }
+
