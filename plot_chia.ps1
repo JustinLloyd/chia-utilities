@@ -18,11 +18,13 @@ $ThreadsPerPlot = $DefaultThreadsPerPlot
 $Buckets = $DefaultBuckets
 $RAMAllocation = $DefaultRAMAllocation
 $MaxPhase1Plots = $DefaultMaxPhase1Plots
+$SecondaryTempStorageLocations = $null
 if ($Config.MaxParallelPlots) { $MaxParallelPlots = $Config.MaxParallelPlots }
 if ($Config.ThreadsPerPlot) { $ThreadsPerPlot = $Config.ThreadsPerPlot } 
 if ($Config.Buckets) { $Buckets = $Config.Buckets }
 if ($Config.RAMAllocation) { $RAMAllocation = $Config.RAMAllocation }
 if ($Config.MaxPhase1Plots) { $MaxPhase1Plots = $Config.MaxPhase1Plots}
+if ($Config.SecondaryTempStorageLocations) { $SecondaryTempStorageLocations = $Config.SecondaryTempStorageLocations}
 
 [void](New-Item -ItemType Directory -Path $LoggingPath -Force)
 $ExecutionLog = Join-Path $LoggingPath 'plotting.log'
@@ -57,7 +59,7 @@ if ($PlotsInPhase1.Count -ge $MaxPhase1Plots)
 
 foreach ($TempStorageLocation in $TempStorageLocations)
 {
-    $TempStorageLocation.MaxParallelPlots -= ($ChiaProcesses | Where {$_.CommandLine -Like "* -t $($TempStorageLocation.Path) -d *"} | Measure -ErrorAction SilentlyContinue).Count
+    $TempStorageLocation.MaxParallelPlots -= ($ChiaProcesses | Where {$_.CommandLine -Like "* -t $($TempStorageLocation.Path) *"} | Measure -ErrorAction SilentlyContinue).Count
 }
 
 $TempStorageLocation = Get-Random -InputObject ($TempStorageLocations | Where {$_.MaxParallelPlots -Gt 0})
@@ -69,10 +71,12 @@ if (!$TempStorageLocation)
     exit
 }
 
-# determine which chia processes were started by this script
-# determine which phase each chia process is in
-# look for any available temp storage location that does not have a plot in phase 1
-# if we didn't find an available temp storage location then just exit
+$SecondaryTempStorageLocation = $TempStorageLocation
+if ($SecondaryTempStorageLocations -and $SecondaryTempStorageLocations.Count -gt 0)
+{
+    $SecondaryTempStorageLocation = Get-Random -InputObject $SecondaryTempStorageLocations
+}
+
 
 $HoldingPath = Get-Random -InputObject $HoldingPaths
 [void](New-Item -ItemType Directory -Path $TempStorageLocation.Path -Force)
@@ -84,7 +88,7 @@ $StatusLogFilePath = "$($PlottingLogPath).status.log"
 Add-Content -Value "MSG: $(get-date -f yyyy-MM-dd_HH-mm): Plotting chia to $($TempStorageLocation.Path)" -Path $ExecutionLog
 #pushd ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon
 $ChiaExecutable = Resolve-Path ~\AppData\Local\chia-blockchain\app-*\resources\app.asar.unpacked\daemon\chia.exe
-$ChiaArguments = "plots create -b $($RAMAllocation) -u $($Buckets) -k 32 -n 1 -r $($ThreadsPerPlot) -t $($TempStorageLocation.Path) -d $($HoldingPath)"
+$ChiaArguments = "plots create -b $($RAMAllocation) -u $($Buckets) -k 32 -n 1 -r $($ThreadsPerPlot) -t $($TempStorageLocation.Path) -2 $($SecondaryTempStorageLocation.Path) -d $($HoldingPath)"
 $process = Start-Process $ChiaExecutable -ArgumentList $ChiaArguments -PassThru -NoNewWindow -RedirectStandardOutput $StdOutFilePath -RedirectStandardError $StdErrFilePath
 Start-Sleep -Seconds 3
 # TODO wait until the process has actually started, but with a timeout
